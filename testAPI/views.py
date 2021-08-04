@@ -88,15 +88,13 @@ def api_putComment(request):
     data = json.loads((request.body).decode('utf-8'))
     author = setParam("author", "anonimous", data)
     text = setParam("text", "some text", data)
-    level = int(setParam("level", 1, data))
     parent_id = int(setParam("parent_id", 0, data))
     article_id = int(setParam("article_id", 0, data))
-    print (author, text, level, parent_id, article_id)
     if parent_id == 0:
         article = Article.objects.filter(id=article_id).first()
-        id = article.addComment(article_id, parent_id, level, author, text)
+        id = article.addComment(article_id, parent_id, 1, author, text)
     else:
         comment = Comment.objects.filter(id=parent_id).first()
-        id = comment.addComment(article_id, parent_id, level, author, text)
+        id = comment.addComment(article_id, parent_id, comment.level + 1, author, text)
 
     return JsonResponse({"status": "200", "comment id": id})
