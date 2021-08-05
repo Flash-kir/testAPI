@@ -30,10 +30,13 @@ This is a test task for an interview
 
 ## installation
 ```console
-pip3 install git+https://github.com/Flash-kir/testAPI
-pip3 install recuirenments.txt
+pip3 install git
+git clone https://github.com/Flash-kir/testAPI
+cd testAPI/
+pip3 install -r requirenments.txt
 python manage.py runserver
 ```
+Starting development server at http://127.0.0.1:8000/
 ## models
 #### Article
 |field|type|
