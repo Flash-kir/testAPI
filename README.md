@@ -1,90 +1,171 @@
-# testAPI
-test API for article comments
+# API for article comments
 
-project api
+## description
+This is a test task for an interview
 
-requests:
+## formulation of the problem
 
-- add Article
-POST
-url: http://127.0.0.1:8000/api/articles/
-JSON body params:
-"title" - str param, is Article title
-"text" - TextField param, is Article text
+### Реализовать REST API для системы комментариев блога.
+##### Функциональные требования:
+У системы должны быть методы API, которые обеспечивают
+- Добавление статьи (Можно чисто номинально, как сущность, к которой крепятся комментарии).
+- Добавление комментария к статье.
+- Добавление коментария в ответ на другой комментарий (возможна любая вложенность).
+- Получение всех комментариев к статье вплоть до 3 уровня вложенности.
+- Получение всех вложенных комментариев для комментария 3 уровня.
+- По ответу API комментариев можно воссоздать древовидную структуру.
 
-return:
-JSON
+##### Нефункциональные требования:
+- Использование Django ORM.
+- Следование принципам REST.
+- Число запросов к базе данных не должно напрямую зависеть от количества комментариев, уровня вложенности.
+- Решение в виде репозитория на Github, Gitlab или Bitbucket.
+- readme, в котором указано, как собирать и запускать проект. Зависимости указать в requirements.txt либо использовать poetry/pipenv.
+- Использование свежих версий python и Django.
+
+##### Будет плюсом:
+- Использование PostgreSQL.
+- docker-compose для запуска api и базы данных.
+- Swagger либо иная документация к апи.
+
+## installation
+```console
+pip3 install git+https://github.com/Flash-kir/testAPI
+pip3 install recuirenments.txt
+python manage.py runserver
+```
+## models
+#### Article
+|field|type|
+|-----|----|
+|id|BigAutoField(primary_key=True)|
+|title|CharField(max_length=64, null=True, blank=True)|
+|text|TextField()|
+
+#### Comment
+|field|type|
+|-----|----|
+|id|BigAutoField(primary_key=True)|
+|artcle|ForeignKey(Article, on_delete=models.PROTECT)|
+|parent|IntegerField()|
+|author|CharField(max_length=32, null=True, blank=True)|
+|level|IntegerField()|
+|text|TextField()|
+## api
+
+### add object Article
+##### request
+|type|url|json params|
+|----|---|-----------|
+|POST |/api/articles/|```{"title": "str64 param","text": "text param"}```|
+
+##### return
+```json
 {
-  "status": "200", - status
-  "article id": 16 - ID of new article
+  "status": "200",
+  "article id": "int"
 }
+```
 
+### add object Comment
+##### request
+|type|url|json params|
+|----|---|-----------|
+|POST |/api/comments/|{"author": "str32","text": "text","article_id": "int","parent_id": "int"}|
 
-- add Comment
-POST
-url: http://127.0.0.1:8000/api/comments/
-JSON body params:
-"author" - str param, is Comment author name
-"text" - TextField param, is Comment text
-"article_id" - int param, the ID of article
-"parent_id" - int param, mean ID of parent comment,
-              if comment is not answer for another set 0
-
-return:
-JSON
+##### return
+```json
 {
-  "status": "200", - status
-  "comment id": 12 - ID of new comment
+  "status": "200",
+  "comment id": "int"
 }
+```
 
-- get comments for Article with depth
-POST
-url: http://127.0.0.1:8000/api/article/1/comments/
-where 1 in URL is ID of Article
-JSON body params:
-"max_level" - int param, mean depth of comments tree
+### get comments for Article with depth
+##### request
+|type|url|url params|json params|
+|----|---|-----|-----------|
+|POST |/api/article/{article_id}/comments/|"article_id" type "int"|{"max_level": "int - the depth of comment tree, set 0 to get all child comments"}|
 
-return:
-JSON {
-  "level": 0,   - level 0 mean that comments belong to article
-  "number": 4,  - number of child comments for use in cycle
+##### return
+```json
+{
+  "level": "int - depth level of comment(for article level is 0)",
+  "number": "int - number of child comments to use in cycle(use keys from '0' to 'number - 1')",
+  "child":
+  {
+    "0":
+    {
+      "level": "int",
+      "number": "int",
+      "author": "str32 - comment author name",
+      "text": "text - comment text",
+      "id": "int - comment id",
+      "child": {}
+    }
+  }
+}
+```
+##### JSON response example
+```json
+{
+  "level": 0,
+  "number": 4,
   "child": {
-    "0": { - number of comment for use in cycle
+    "0": {
       "level": 1,
-      "number": 0, - number of child comments for use in cycle
-      "author": "anon", - author name
-      "text": "text of comment", - text
-      "id": 1,     - ID of comment to use in requests
-      "child": {}  - empty if number = 0
+      "number": 0,
+      "author": "anon",
+      "text": "text of comment",
+      "id": 1,
+      "child": {}
     },
     "1": {
       "level": 1,
-      "number": 1, - number of child comments for use in cycle
-      "author": "name2", - author name
-      "text": "text of comment 2", - text
-      "id": 2,     - ID of comment to use in requests
+      "number": 1,
+      "author": "name2",
+      "text": "text of comment 2",
+      "id": 2,
       "child": {
         "level": 2,
-        "number": 0, - number of child comments for use in cycle
-        "author": "anon3", - author name
-        "text": "text of comment 3", - text
-        "id": 3,     - ID of comment to use in requests
-        "child": {}  - empty if number = 0
+        "number": 0,
+        "author": "anon3",
+        "text": "text of comment 3",
+        "id": 3,
+        "child": {}
         }     
       }
   }
 }
+```
+### get comments for Comment with depth
+##### request
+|type|url|url params|json params|
+|----|---|-----|-----------|
+|POST |/api/comment/{comment_id}/comments/|"comment_id" type "int"|{"max_level": "int - the depth of comment tree, set 0 to get all child comments"}|
 
-- get comments for Comment with depth
-POST
-url: http://127.0.0.1:8000/api/comment/8/comments/
-where 8 in URL is ID of Comment
-JSON body params:
-"max_level" - int param, mean depth of comments tree, set 0 - for all child comments
+##### return
+```json
+{
+  "level": "int - depth level of comment(for article level is 0)",
+  "number": "int - number of child comments to use in cycle(use keys from '0' to 'number - 1')",
+  "child":
+  {
+    "0":
+    {
+      "level": "int",
+      "number": "int",
+      "author": "str32 - comment author name",
+      "text": "text - comment text",
+      "id": "int - comment id",
+      "child": {}
+    }
+  }
+}
+```
 
-return:
-JSON
-the tree of JSON is the same of previous request JSON response
+##### JSON response example
+```json
 {
   "level": 3,
   "number": 1,
